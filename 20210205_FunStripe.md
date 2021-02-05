@@ -291,6 +291,35 @@ and AlipayAccountCustomer'AnyOf =
 
 ### Serialisation
 
+Stripe uses `snake_case` whereas F# uses `camelCase` or `PascalCase`. This is generally handled automatically both for serialisation and deserialisation by the JSON serialiser settings. Where this is not the case then the appropriate attributes have been added, e.g.:
+
+Discriminated union:
+```fsharp
+and AccountCapabilityRequirementsDisabledReason =
+    | [<JsonUnionCase("requirement.fields_needed")>] RequirementFieldsNeeded
+    | [<JsonUnionCase("pending.onboarding")>] PendingOnboarding
+    | [<JsonUnionCase("pending.review")>] PendingReview
+    | RejectedFraud
+    | [<JsonUnionCase("rejected.other")>] RejectedOther
+```
+Record:
+```fsharp
+and Address = {
+    City: string option
+    Country: string option
+    [<JsonField(Name="line1")>]Line1: string option
+    [<JsonField(Name="line2")>]Line2: string option
+    PostalCode: string option
+    State: string option
+}
+```
+
+Stripe uses Unix timestamps to represent dates, but these can easily be handled by decorating them with a `Transform` attribute:
+
+```fsharp
+[<JsonField(Transform=typeof<Transforms.DateTimeEpoch>)>]Created: DateTime option
+```
+
 ### List values
 
 List values in responses are wrapped in a data object with some additional properties relating to paging. Due to time constraints I decided simply to extract the list directly and ignore the paging fields. There is a chance that the required value will not be in the first page of results, but a workaround for now is to supply a higher `limit` parameter in the request. 
@@ -300,6 +329,7 @@ JSON:
 {
     "object": "list",
     "data": [
+        //…
     ],
     "has_more": true,
     "url": "/v1/payment_methods"
