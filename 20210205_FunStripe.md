@@ -30,11 +30,36 @@ Let's look at each of these in a bit more detail.
 
 ### Structure
 
+The two files generated are `StripeModel.fs` and `StripeRequest.fs`. The model contains all of the Stripe objects that are returned by the requests. They are separate files due to the complexity of the API and the  different nature of the information in each of them.
+
+The `StripeModel` module is not separated into submodules due to the number of cross references between the record types. In F# types must normally be declared before they are used, but the nature of the Stripe API model is so complex that this was not practical. Instead, a recursive type notation is used, with the keyword `type` declaring the first type and the keyword `and` declaring all subsequent types:
+
+```F#
+module StripeModel =
+    type Account = {
+        …
+    }
+    and AccountBusinessType =
+    |   …
+```
+
+The `StripeRequest` module is separated into submodules, for two main reasons: firstly, there are a lot of name clashes, as there are lots of `Create` and `Retrieve` functions for example; and secondly, the types and functions within each module do not have any other dependencies elsewhere in the `StripeRequest` module, only relying on the `StripeModel` module to be opened. Each submodule is therefore self-contained and always follows the same structure: and Options type followed by a function taking the options as a parameter:
+
+```F#
+    module Account =
+        type RetrieveOptions = {
+            …
+        }
+            …
+        let Retrieve settings (options: RetrieveOptions) =
+            …
+```
+
 ### Record types
 
 ### Discriminated unions
 
-### `Option` types
+### Option types
 
 ### Optional parameters
 
