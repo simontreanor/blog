@@ -183,7 +183,7 @@ FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/
 - Paged lists
 - Mixture of non-required and nullable fields
 
-Again, let's look at each of these in a bit more detail.
+Let's look at some of these in a bit more detail.
 
 ### Form-value requests
 
@@ -292,3 +292,20 @@ and AlipayAccountCustomer'AnyOf =
 ### Serialisation
 
 ### List values
+
+List values in responses are wrapped in a data object with some additional properties relating to paging. Due to time constraints I decided simply to extract the list directly and ignore the paging fields. There is a chance that the required value will not be in the first page of results, but a workaround for now is to supply a higher `limit` parameter in the request. 
+
+JSON:
+```json
+{
+    "object": "list",
+    "data": [
+    ],
+    "has_more": true,
+    "url": "/v1/payment_methods"
+}
+```
+F#:
+```fsharp
+|> RestApi.getAsync<PaymentMethod list>
+```
