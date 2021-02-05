@@ -46,24 +46,94 @@ module StripeModel =
 The `StripeRequest` module is separated into submodules, for two main reasons: firstly, there are a lot of name clashes, as there are lots of `Create` and `Retrieve` functions for example; and secondly, the types and functions within each module do not have any other dependencies elsewhere in the `StripeRequest` module, only relying on the `StripeModel` module to be opened. Each submodule is therefore self-contained and always follows the same structure: and Options type followed by a function taking the options as a parameter:
 
 ```fsharp
-module Account =
-    type RetrieveOptions = {
-        //…
-    }
-        //…
-    let Retrieve settings (options: RetrieveOptions) =
-        //…
+module StripeRequest =
+    //…
+    module Account =
+        type RetrieveOptions = {
+            //…
+        }
+            //…
+        let Retrieve settings (options: RetrieveOptions) =
+            //…
 ```
 
 ### Record types
 
+In the Stripe API model and request modules many types have a large number of properties and so instantiating records using all their properties is not practical. So each record is declared in the normal way but with a static function appended to create an instance of that record type:
+
+```fsharp
+    and AccountDashboardSettings = {
+        DisplayName: string option
+        Timezone: string option
+    }
+    with
+        static member New (displayName: string option, timezone: string option) =
+            {
+                AccountDashboardSettings.DisplayName = displayName //required
+                AccountDashboardSettings.Timezone = timezone //required
+            }
+```
+
 ### Discriminated unions
 
-### Option types
+String enumerations are represented wherever possible using discriminated unions. These have the advantage of being strongly typed and therefore help prevent coding errors:
 
-### Optional parameters
+```fsharp
+    and AccountBusinessType =
+        | Company
+        | GovernmentEntity
+        | Individual
+        | NonProfit
+```
+
+### Option types and optional parameters
+
+These two concepts are closely related. Parameter type declarations are marked with the `option` keyword, while optional functional parameters are marked by a `?` prepended to the parameter name. Sometimes parameters are both optional and `Option` types, in which case the option needs flattening when assigning the value:
+
+```fsharp
+    and AccountTosAcceptance = {
+        Date: DateTime option
+        Ip: string option
+        ServiceAgreement: string option
+        UserAgent: string option
+    }
+    with
+        static member New (?date: DateTime option, ?ip: string option, ?serviceAgreement: string, ?userAgent: string option) =
+            {
+                AccountTosAcceptance.Date = date |> Option.flatten
+                AccountTosAcceptance.Ip = ip |> Option.flatten
+                AccountTosAcceptance.ServiceAgreement = serviceAgreement
+                AccountTosAcceptance.UserAgent = userAgent |> Option.flatten
+            }
+```
 
 ### Computation expression
+
+The `AsyncResultCE` module defines a custom computation expression, `asyncResult`. This is a way to combine async calls with `Result` return values:
+
+```fsharp
+    ///Defines an ```AsyncResult``` as a ```Result``` wrapped in an ```Async```
+    type AsyncResult<'ok,'error> = Async<Result<'ok,'error>>
+```
+
+This is used e.g. as follows:
+
+```fsharp
+let result =
+    asyncResult {
+        let expected = defaultPaymentMethod // PaymentMethod
+        let! actual = getNewPaymentMethod() // unit -> AsyncResult<PaymentMethod,ErrorResponse>
+        return expected, actual
+    }
+    |> Async.RunSynchronously
+match result with
+| Ok (exp, act) ->
+    //…
+| Error e ->
+    //…
+```
+
+In practical terms what this does is enable you to deal with the actual values within the computation expression (`ayncResult { … }`) and not worry about writing conditions to check for errors at each step. The code proceeds happily along provided that the result is `Ok`, but if at any point something goes wrong it will stop processing and return a result of `Error`.
 
 ### F# Interactive
 
@@ -78,7 +148,9 @@ Some of the difficulties in developing for the Stripe API include:
 - Some aspects of the workflow require the use of client script (e.g. collecting card payment details) to protect customer confidentiality (this is not handled by the
 FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/)-based app to show how easily it can be done
 - Inconsistent naming conventions causing issue for serialisation
+- DateTime values represented as Unix timestamps
 - Paged lists
+- Mixture of non-required and nullable fields
 
 Again, let's look at each of these in a bit more detail.
 
