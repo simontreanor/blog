@@ -291,6 +291,8 @@ and AlipayAccountCustomer'AnyOf =
 
 ### Serialisation
 
+#### Naming conventions
+
 Stripe uses `snake_case` whereas F# uses `camelCase` or `PascalCase`. This is generally handled automatically both for serialisation and deserialisation by the JSON serialiser settings. Where this is not the case then the appropriate attributes have been added, e.g.:
 
 Discriminated union:
@@ -314,13 +316,43 @@ and Address = {
 }
 ```
 
+#### DateTime values
+
 Stripe uses Unix timestamps to represent dates, but these can easily be handled by decorating them with a `Transform` attribute:
 
 ```fsharp
 [<JsonField(Transform=typeof<Transforms.DateTimeEpoch>)>]Created: DateTime option
 ```
 
-### List values
+#### AnyOf values
+
+Deserialisation of `AnyOf` values was rather more of a challenge; this involved customising the deserialiser itself. Normally the deserialiser needs to know the type to deserialise, but when it can be one of several types then a different approach is needed.
+
+Example `AnyOf` value:
+```fsharp
+and AlipayAccountCustomer'AnyOf =
+    | String of string
+    | Customer of Customer
+    | DeletedCustomer of DeletedCustomer
+```
+The following function uses reflection to get the types in all the union cases:
+```fsharp
+///Get the types and underlying types of a discriminated union
+let getUnderlyingTypes (t: Type) =
+    t.GetMembers().Cast<MemberInfo>()
+    |> Seq.filter(fun mi -> mi.MemberType = MemberTypes.NestedType)
+    |> Seq.map(fun mi -> mi :?> Type)
+    |> Seq.collect(fun t ->
+        t.GetProperties()
+        |> Seq.filter(fun pi -> pi.Name = "Item")
+        |> Seq.map(fun pi -> (t, pi.PropertyType))
+    )
+```
+This information can then be used by the deserialiser to parse the value. If it is a string, there is almost always a string representation in the union (that's just the way Stripe designed it - usually the ID of the object rather than the full object). If it is a record, then it matches the correct type and then deserialises accordingly.
+
+The implementation is rather technical, but it can be inspected by looking at the [diff](https://github.com/simontreanor/FunStripe/commit/57300aa450ad986f1d1ae9ba72a29e82a29482e9#diff-de2779b49743af5c11083b39d56d1e8cd3db04d4a9e72b78f71e7b0d8b29bc8a) between the vanilla FSharp.Json `Core.fs` file and the version modified for Stripe starting at line 488 in the modifed version.
+
+#### List values
 
 List values in responses are wrapped in a data object with some additional properties relating to paging. Due to time constraints I decided simply to extract the list directly and ignore the paging fields. There is a chance that the required value will not be in the first page of results, but a workaround for now is to supply a higher `limit` parameter in the request. 
 
