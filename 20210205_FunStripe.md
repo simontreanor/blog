@@ -187,9 +187,40 @@ Again, let's look at each of these in a bit more detail.
 
 ### Form-value requests
 
+Rather strangely, despite responding in JSON to requests, body parameters are not formatted using JSON but rather are x-www-form-urlencoded, .e.g.:
+
+```fsharp
+seq {
+    "type", "card"
+    "card[number]", "4242424242424242"
+    "card[exp_month]", "10"
+    "card[exp_year]", "2021"
+    "card[cvc]", "314"
+}
+```
+
+In order to handle this the `FormUtil` module uses some functions derived from the C# version in Stripe.NET, with modifications to anable it to handle discriminated unions, `Option` types, `Choice` types and records.
+
 ### Parameters
 
+Stripe request parameters can be either in the path, the query string or the body. To simplify requests these three types of parameter are all concatenated into a single option record type. Parameters are typically a mix of path and query for get requests and path and form for post requests, and are distiguished by attributes, e.g.:
+
+```fsharp
+    type RetrieveOptions = {
+        [<Config.Path>]Account: string
+        [<Config.Query>]Expand: string list option
+    }
+    //…
+    type Update'BusinessProfileSupportAddress = {
+        [<Config.Form>]City: string option
+        [<Config.Form>]Country: string option
+        //…
+    }
+```
+
 ### Enumerations
+
+In many cases the Stripe API provides the possible values for an enumeration in the specification. In other cases however, the possible values are only provided in the description for the parameter. If explicit values are not provided, the model builder parses them from the text of the description. They are then represented as discriminated unions, with the huge benefit of being strongly typed.
 
 ### Client-side scripting
 
