@@ -16,13 +16,24 @@ up front and create static F# files for the model and requests. There are a coup
 - The code generators can be tweaked by developers to deal with the Stripe API's ideosyncracies in whatever way they see fit
 - When the API version is updated, new model and request files can be generated and the diff inspected to see what impact the version change may have on existing code
 
+## F#-specific Features
+
+- Modules and submodules to group related functions and provide name disambiguation
+- Record types to represent objects
+- Discriminated unions to represent string enumerations
+- `Option` types to specifically represent nullable values
+- `?` to represent optional parameters in static constructor methods for records
+
 ## Stripe API Ideosyncracies
 
 Some of the difficulties in developing for the Stripe API include:
 
-- Requests use a mixture of path, query-string and form parameters
 - Request bodies need to be supplied as form values rather than JSON
+- Requests use a mixture of path, query-string and form parameters
 - Stripe is inconsistent in that some enumerations are represented as strings and others as objects
 - Some fields in responses are polymorphic, e.g. a customer can be returned as either a string representing the customer ID or as a full customer object
 - Some aspects of the workflow require the use of client script (e.g. collecting card payment details) to protect customer confidentiality (this is not handled by the
 FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/)-based app to show how easily it can be done
+- Inconsistent naming conventions
+- Paged lists
+
