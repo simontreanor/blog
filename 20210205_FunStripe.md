@@ -23,6 +23,24 @@ up front and create static F# files for the model and requests. There are a coup
 - Discriminated unions to represent string enumerations
 - `Option` types to specifically represent nullable values
 - `?` to represent optional parameters in static constructor methods for records
+- Custom computation expression to help with error handling
+- Use of F# Interactive to generate code files
+
+Let's look at each of these in a bit more detail.
+
+### Structure
+
+### Record types
+
+### Discriminated unions
+
+### `Option` types
+
+### Optional parameters
+
+### Computation expression
+
+### F# Interactive
 
 ## Stripe API Ideosyncracies
 
@@ -34,6 +52,21 @@ Some of the difficulties in developing for the Stripe API include:
 - Some fields in responses are polymorphic, e.g. a customer can be returned as either a string representing the customer ID or as a full customer object
 - Some aspects of the workflow require the use of client script (e.g. collecting card payment details) to protect customer confidentiality (this is not handled by the
 FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/)-based app to show how easily it can be done
-- Inconsistent naming conventions
+- Inconsistent naming conventions causing issue for serialisation
 - Paged lists
 
+Again, let's look at each of these in a bit more detail.
+
+### Form-value requests
+
+### Parameters
+
+### Enumerations
+
+### Client-side scripting
+
+### Polymorphism
+
+### Serialisation
+
+### List values
