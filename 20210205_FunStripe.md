@@ -1,4 +1,4 @@
-Simon Treanor, 2021-02-05 Friday
+Simon Treanor, 2021-02-05
 
 # FunStripe
 
@@ -32,7 +32,7 @@ Let's look at each of these in a bit more detail.
 
 ### Structure
 
-- Json\*: an extract of `FSharp.Json` modified for Stripe
+- `Json\\*`: an extract of `FSharp.Json` modified for Stripe
 - `AsyncResult.fs`: custom computation expression (see below)
 - `Config.fs`: some global attributes plus user settings, including a function to retrieve the Stripe API key from [UserSecrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-5.0&tabs=windows)
 - `FormUtil.fs`: functions for formatting request bodies as form values
@@ -75,16 +75,16 @@ module StripeRequest =
 In the Stripe API model and request modules many types have a large number of properties and so instantiating records using all their properties is not practical. So each record is declared in the normal way but with a static function appended to create an instance of that record type:
 
 ```fsharp
-    and AccountDashboardSettings = {
-        DisplayName: string option
-        Timezone: string option
-    }
-    with
-        static member New (displayName: string option, timezone: string option) =
-            {
-                AccountDashboardSettings.DisplayName = displayName //required
-                AccountDashboardSettings.Timezone = timezone //required
-            }
+and AccountDashboardSettings = {
+    DisplayName: string option
+    Timezone: string option
+}
+with
+    static member New (displayName: string option, timezone: string option) =
+        {
+            AccountDashboardSettings.DisplayName = displayName //required
+            AccountDashboardSettings.Timezone = timezone //required
+        }
 ```
 
 ### Discriminated unions
@@ -92,11 +92,11 @@ In the Stripe API model and request modules many types have a large number of pr
 String enumerations are represented wherever possible using discriminated unions. These have the advantage of being strongly typed and therefore help prevent coding errors:
 
 ```fsharp
-    and AccountBusinessType =
-        | Company
-        | GovernmentEntity
-        | Individual
-        | NonProfit
+and AccountBusinessType =
+    | Company
+    | GovernmentEntity
+    | Individual
+    | NonProfit
 ```
 
 ### Option types and optional parameters
@@ -104,20 +104,20 @@ String enumerations are represented wherever possible using discriminated unions
 These two concepts are closely related. Parameter type declarations are marked with the `option` keyword, while optional functional parameters are marked by a `?` prepended to the parameter name. Sometimes parameters are both optional and `Option` types, in which case the option needs flattening when assigning the value:
 
 ```fsharp
-    and AccountTosAcceptance = {
-        Date: DateTime option
-        Ip: string option
-        ServiceAgreement: string option
-        UserAgent: string option
-    }
-    with
-        static member New (?date: DateTime option, ?ip: string option, ?serviceAgreement: string, ?userAgent: string option) =
-            {
-                AccountTosAcceptance.Date = date |> Option.flatten
-                AccountTosAcceptance.Ip = ip |> Option.flatten
-                AccountTosAcceptance.ServiceAgreement = serviceAgreement
-                AccountTosAcceptance.UserAgent = userAgent |> Option.flatten
-            }
+and AccountTosAcceptance = {
+    Date: DateTime option
+    Ip: string option
+    ServiceAgreement: string option
+    UserAgent: string option
+}
+with
+    static member New (?date: DateTime option, ?ip: string option, ?serviceAgreement: string, ?userAgent: string option) =
+        {
+            AccountTosAcceptance.Date = date |> Option.flatten
+            AccountTosAcceptance.Ip = ip |> Option.flatten
+            AccountTosAcceptance.ServiceAgreement = serviceAgreement
+            AccountTosAcceptance.UserAgent = userAgent |> Option.flatten
+        }
 ```
 
 ### Computation expression
@@ -125,7 +125,7 @@ These two concepts are closely related. Parameter type declarations are marked w
 The `AsyncResultCE` module defines a custom computation expression, `asyncResult`. This is a way to combine async calls with `Result` return values:
 
 ```fsharp
-    type AsyncResult<'ok,'error> = Async<Result<'ok,'error>>
+type AsyncResult<'ok,'error> = Async<Result<'ok,'error>>
 ```
 
 This is used e.g. as follows:
@@ -206,22 +206,61 @@ In order to handle this the `FormUtil` module uses some functions derived from t
 Stripe request parameters can be either in the path, the query string or the body. To simplify requests these three types of parameter are all concatenated into a single option record type. Parameters are typically a mix of path and query for get requests and path and form for post requests, and are distiguished by attributes, e.g.:
 
 ```fsharp
-    type RetrieveOptions = {
-        [<Config.Path>]Account: string
-        [<Config.Query>]Expand: string list option
-    }
+type RetrieveOptions = {
+    [<Config.Path>]Account: string
+    [<Config.Query>]Expand: string list option
+}
+//…
+type Update'BusinessProfileSupportAddress = {
+    [<Config.Form>]City: string option
+    [<Config.Form>]Country: string option
     //…
-    type Update'BusinessProfileSupportAddress = {
-        [<Config.Form>]City: string option
-        [<Config.Form>]Country: string option
-        //…
-    }
+}
 ```
 
 ### Enumerations
 
 In many cases the Stripe API provides the possible values for an enumeration in the specification. In other cases however, the possible values are only provided in the description for the parameter. If explicit values are not provided, the model builder parses them from the text of the description. They are then represented as discriminated unions, with the huge benefit of being strongly typed.
 
+Enum values provided in explicitly:
+
+```json
+"available_payout_methods": {
+    "description": "A set of available payout methods for this bank account. Only values from this set should be passed as the `method` when creating a payout.",
+    "items": {
+        "enum": [
+            "instant",
+            "standard"
+        ],
+      "type": "string"
+    },
+    "nullable": true,
+    "type": "array"
+}
+```
+```fsharp
+and BankAccountAvailablePayoutMethods =
+    | Instant
+    | Standard
+```
+
+Enum values needing to be parsed from the description:
+
+```json
+"address_line1_check": {
+    "description": "If `address_line1` was provided, results of the check: `pass`, `fail`, `unavailable`, or `unchecked`.",
+    "maxLength": 5000,
+    "nullable": true,
+    "type": "string"
+}
+```
+```fsharp
+and CardAddressLine1Check =
+    | Pass
+    | Fail
+    | Unavailable
+    | Unchecked
+```
 ### Client-side scripting
 
 ### Polymorphism
