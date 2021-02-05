@@ -1,3 +1,5 @@
+Simon Treanor, 2021-02-05 Friday
+
 # FunStripe
 
 FunStripe is an F# 5.0 library to connect to the [Stripe API](https://stripe.com/docs/api), including code generators to update the model and requests. The respository is
@@ -29,6 +31,17 @@ up front and create static F# files for the model and requests. There are a coup
 Let's look at each of these in a bit more detail.
 
 ### Structure
+
+- Json\*: an extract of `FSharp.Json` modified for Stripe
+- `AsyncResult.fs`: custom computation expression (see below)
+- `Config.fs`: some global attributes plus user settings, including a function to retrieve the Stripe API key from [UserSecrets](https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-5.0&tabs=windows)
+- `FormUtil.fs`: functions for formatting request bodies as form values
+- `Program.fs`: test functions for debugging
+- `RestApi.fs`: simple REST API client and error parser
+- `StripeError.fs`: definition of Stripe error object
+- `ModelBuilder.fs` and `RequestBuilder.fs`:
+
+These two files contain code to generate the model and request code files using F# Interactive (see below).
 
 The two files generated are `StripeModel.fs` and `StripeRequest.fs`. The model contains all of the Stripe objects that are returned by the requests. They are separate files due to the complexity of the API and the  different nature of the information in each of them.
 
@@ -112,7 +125,6 @@ These two concepts are closely related. Parameter type declarations are marked w
 The `AsyncResultCE` module defines a custom computation expression, `asyncResult`. This is a way to combine async calls with `Result` return values:
 
 ```fsharp
-    ///Defines an ```AsyncResult``` as a ```Result``` wrapped in an ```Async```
     type AsyncResult<'ok,'error> = Async<Result<'ok,'error>>
 ```
 
@@ -136,6 +148,25 @@ match result with
 In practical terms what this does is enable you to deal with the actual values within the computation expression (`ayncResult { … }`) and not worry about writing conditions to check for errors at each step. The code proceeds happily along provided that the result is `Ok`, but if at any point something goes wrong it will stop processing and return a result of `Error`.
 
 ### F# Interactive
+
+`ModelBuilder.fs` and `RequestBuilder.fs` are both essentially normal F# modules wrapped in a bit of code to enable the code to be sent to F# Interactive:
+
+```fsharp
+#if INTERACTIVE
+    #r "nuget: FSharp.Data";;
+#else
+namespace FunStripe
+#endif
+//…
+#if INTERACTIVE
+    ;;
+    open ModelBuilder;;
+    let s = parseModel None;;
+    System.IO.File.WriteAllText(__SOURCE_DIRECTORY__ + "/StripeModel.fs", s);;
+#endif
+```
+
+In VS Code, selecting the entire code in the file and pressing `Alt` + `Enter` sends the code to F# Interactive. The `;;` causes the code to run, after which a function parses the API specification and outputs the `.fs` code file.
 
 ## Stripe API Ideosyncracies
 
