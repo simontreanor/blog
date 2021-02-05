@@ -189,14 +189,12 @@ Again, let's look at each of these in a bit more detail.
 
 Rather strangely, despite responding in JSON to requests, body parameters are not formatted using JSON but rather are x-www-form-urlencoded, .e.g.:
 
-```fsharp
-seq {
-    "type", "card"
-    "card[number]", "4242424242424242"
-    "card[exp_month]", "10"
-    "card[exp_year]", "2021"
-    "card[cvc]", "314"
-}
+```
+"type", "card"
+"card[number]", "4242424242424242"
+"card[exp_month]", "10"
+"card[exp_year]", "2021"
+"card[cvc]", "314"
 ```
 
 In order to handle this the `FormUtil` module uses some functions derived from the C# version in Stripe.NET, with modifications to anable it to handle discriminated unions, `Option` types, `Choice` types and records.
@@ -222,22 +220,21 @@ type Update'BusinessProfileSupportAddress = {
 
 In many cases the Stripe API provides the possible values for an enumeration in the specification. In other cases however, the possible values are only provided in the description for the parameter. If explicit values are not provided, the model builder parses them from the text of the description. They are then represented as discriminated unions, with the huge benefit of being strongly typed.
 
-Enum values provided in explicitly:
+Enum values provided explicitly:
 
+JSON:
 ```json
 "available_payout_methods": {
-    "description": "A set of available payout methods for this bank account. Only values from this set should be passed as the `method` when creating a payout.",
+    //…
     "items": {
         "enum": [
             "instant",
             "standard"
         ],
-      "type": "string"
-    },
-    "nullable": true,
-    "type": "array"
+    //…
 }
 ```
+F#:
 ```fsharp
 and BankAccountAvailablePayoutMethods =
     | Instant
@@ -246,14 +243,14 @@ and BankAccountAvailablePayoutMethods =
 
 Enum values needing to be parsed from the description:
 
+JSON:
 ```json
 "address_line1_check": {
     "description": "If `address_line1` was provided, results of the check: `pass`, `fail`, `unavailable`, or `unchecked`.",
-    "maxLength": 5000,
-    "nullable": true,
-    "type": "string"
+    //…
 }
 ```
+F#:
 ```fsharp
 and CardAddressLine1Check =
     | Pass
@@ -261,9 +258,36 @@ and CardAddressLine1Check =
     | Unavailable
     | Unchecked
 ```
-### Client-side scripting
 
 ### Polymorphism
+
+Many properties in the Stripe model are polymorphic, which are easy to represent in F# using discriminated unions. They do cause some headaches when it comes to deserialisation though (see below).
+
+JSON:
+```json
+"customer": {
+    "anyOf": [
+        {
+            "maxLength": 5000,
+            "type": "string"
+        },
+        {
+            "$ref": "#/components/schemas/customer"
+        },
+        {
+            "$ref": "#/components/schemas/deleted_customer"
+        }
+    ],
+    //…
+}
+```
+F#:
+```fsharp
+and AlipayAccountCustomer'AnyOf =
+    | String of string
+    | Customer of Customer
+    | DeletedCustomer of DeletedCustomer
+```
 
 ### Serialisation
 
