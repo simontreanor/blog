@@ -2,8 +2,7 @@ Simon Treanor, 2021-02-05
 
 # FunStripe
 
-FunStripe is an F# 5.0 library to connect to the [Stripe API](https://stripe.com/docs/api), including code generators to update the model and requests. The respository is
-[here](https://github.com/simontreanor/FunStripe).
+FunStripe is an F# 5.0 library to connect to the [Stripe API](https://stripe.com/docs/api), including code generators to update the model and requests.
 
 Though there is already an [official Stripe .NET library](https://github.com/stripe/stripe-dotnet), I wanted to create one in F# with a cleaner, more functional approach,
 taking advantage of strong typing with records and discriminated unions.
@@ -56,7 +55,7 @@ module StripeModel =
     |   //…
 ```
 
-The `StripeRequest` module is separated into submodules, for two main reasons: firstly, there are a lot of name clashes, as there are lots of `Create` and `Retrieve` functions for example; and secondly, the types and functions within each module do not have any other dependencies elsewhere in the `StripeRequest` module, only relying on the `StripeModel` module to be opened. Each submodule is therefore self-contained and always follows the same structure: and Options type followed by a function taking the options as a parameter:
+The `StripeRequest` module is separated into submodules, for two main reasons: firstly, there are a lot of name clashes, as there are lots of `Create` and `Retrieve` functions for example; and secondly, the types and functions within each module do not have any other dependencies elsewhere in the `StripeRequest` module, only relying on the `StripeModel` module to be opened. Each submodule is therefore self-contained and always follows the same structure: an -Options type followed by a function taking the options as a parameter:
 
 ```fsharp
 module StripeRequest =
@@ -177,7 +176,7 @@ Some of the difficulties in developing for the Stripe API include:
 - Stripe is inconsistent in that some enumerations are represented as strings and others as objects
 - Some fields in responses are polymorphic, e.g. a customer can be returned as either a string representing the customer ID or as a full customer object
 - Some aspects of the workflow require the use of client script (e.g. collecting card payment details) to protect customer confidentiality (this is not handled by the
-FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/)-based app to show how easily it can be done
+FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/)-based app to show how easily it can be done)
 - Inconsistent naming conventions causing issue for serialisation
 - DateTime values represented as Unix timestamps
 - Paged lists
@@ -371,3 +370,7 @@ F#:
 ```fsharp
 |> RestApi.getAsync<PaymentMethod list>
 ```
+
+## Source-Code Repository
+
+The FunStripe source code can be found [here](https://github.com/simontreanor/FunStripe).
