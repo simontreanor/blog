@@ -176,7 +176,8 @@ Some of the difficulties in developing for the Stripe API include:
 - Stripe is inconsistent in that some enumerations are represented as strings and others as objects
 - Some fields in responses are polymorphic, e.g. a customer can be returned as either a string representing the customer ID or as a full customer object
 - Some aspects of the workflow require the use of client script (e.g. collecting card payment details) to protect customer confidentiality (this is not handled by the
-FunStripe library, though I will shortly publish a [Bolero](https://fsbolero.io/)-based app to show how easily it can be done)
+FunStripe library, ~~though I will shortly publish a [Bolero](https://fsbolero.io/)-based app~~ *\[update 2021-02-15\]* but I have published
+a [Bolero](https://fsbolero.io/)-based app [here](https://github.com/simontreanor/FunStripe.Bolero) to show how easily it can be done)
 - Inconsistent naming conventions causing issue for serialisation
 - DateTime values represented as Unix timestamps
 - Paged lists
